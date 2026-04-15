@@ -5,64 +5,87 @@ namespace App\Features\Auth\Services;
 use App\Features\Auth\Repository\AuthRepository;
 use App\Features\Auth\Requests\LoginRequest;
 use App\Features\Auth\Requests\RegisterRequest;
+use App\Traits\ApiResponse;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class AuthService
 {
-  public function __construct(private AuthRepository $repo) {}
+    use ApiResponse;
 
-  public function register(RegisterRequest $request)
-  {
-    $data = $request->validated();
+    public function __construct(private AuthRepository $repo) {}
 
-    $user = $this->repo->create([
-      'name' => $data['name'],
-      'email' => $data['email'],
-      'password' => Hash::make($data['password']),
-      'role' => 'admin'
-    ]);
+    public function register(RegisterRequest $request): JsonResponse
+    {
+        $data = $request->validated();
 
-    $abilities = $user->role === 'super_admin'
-      ? ['*']
-      : ['admin'];
+        $user = $this->repo->create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'role' => 'admin'
+        ]);
 
-    $token = $this->repo->createToken($user, 'admin-panel', $abilities);
+        $abilities = $user->role === 'super_admin'
+            ? ['*']
+            : ['admin'];
 
-    return response()->json([
-      'user' => $user,
-      'token' => $token
-    ], 201);
-  }
+        $token = $this->repo->createToken($user, 'admin-panel', $abilities);
 
-  public function login(LoginRequest $request)
-  {
-    $data = $request->validated();
-    $user = $this->repo->findByEmail($data['email']);
-
-    if (!$user || !Hash::check($data['password'], $user->password)) {
-      throw ValidationException::withMessages([
-        'email' => ['Invalid credentials.'],
-      ]);
+        return $this->successResponse('Registered successfully.', [
+            'user' => $user,
+            'token' => $token,
+        ], 201);
     }
 
-    if (!in_array($user->role, ['admin', 'super_admin'], true)) {
-      throw ValidationException::withMessages([
-        'email' => ['This account is not allowed to access the admin panel.'],
-      ]);
+    public function login(LoginRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $user = $this->repo->findByEmail($data['email']);
+
+        if (!$user || !Hash::check($data['password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'email' => ['Invalid credentials.'],
+            ]);
+        }
+
+        if (!in_array($user->role, ['admin', 'super_admin'], true)) {
+            throw ValidationException::withMessages([
+                'email' => ['This account is not allowed to access the admin panel.'],
+            ]);
+        }
+
+        $tokenName = $data['device_name'] ?? 'admin-panel';
+
+        $abilities = $user->role === 'super_admin'
+            ? ['*']
+            : ['admin'];
+
+        $token = $this->repo->createToken($user, $tokenName, $abilities);
+
+        return $this->successResponse('Logged in successfully.', [
+            'user' => $user,
+            'token' => $token,
+        ]);
     }
 
-    $tokenName = $data['device_name'] ?? 'admin-panel';
+    public function logout(Request $request): JsonResponse
+    {
+        $user = $request->user();
 
-    $abilities = $user->role === 'super_admin'
-      ? ['*']
-      : ['admin'];
+        if ($user) {
+            $this->repo->deleteCurrentAccessToken($user);
+        }
 
-    $token = $this->repo->createToken($user, $tokenName, $abilities);
+        return $this->successResponse('Logged out successfully.');
+    }
 
-    return response()->json([
-      'user' => $user,
-      'token' => $token,
-    ]);
-  }
+    public function me(Request $request): JsonResponse
+    {
+        return $this->successResponse('User profile fetched successfully.', [
+            'user' => $request->user(),
+        ]);
+    }
 }
