@@ -26,4 +26,9 @@ class AuthRepository extends BaseRepository
     {
         $user->tokens()->delete();
     }
+
+    public function updateLastLogin(int $id, array $data)
+    {
+        return parent::update($id, $data);
+    }
 }

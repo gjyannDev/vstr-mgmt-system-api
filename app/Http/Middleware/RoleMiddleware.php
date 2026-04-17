@@ -8,32 +8,44 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RoleMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  Closure(Request): (Response)  $next
-     */
-    public function handle(Request $request, Closure $next, $role): Response
-    {
+  /**
+   * Handle an incoming request.
+   *
+   * @param  Closure(Request): (Response)  $next
+   */
+  public function handle(Request $request, Closure $next, string ...$roles): Response
+  {
 
-        $user = $request->user();
+    $user = $request->user();
 
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthenticated.',
-                'data' => null,
-            ], 401);
-        }
-
-        if (!in_array($user->role, $role, true)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Forbidden.',
-                'data' => null,
-            ], 403);
-        }
-
-        return $next($request);
+    if (!$user) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Unauthenticated.',
+        'data' => null,
+      ], 401);
     }
+
+    $allowedRoles = [];
+
+    foreach ($roles as $roleChunk) {
+      foreach (explode(',', $roleChunk) as $role) {
+        $role = trim($role);
+
+        if ($role !== '') {
+          $allowedRoles[] = $role;
+        }
+      }
+    }
+
+    if (!in_array($user->role, $allowedRoles, true)) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Forbidden.',
+        'data' => null,
+      ], 403);
+    }
+
+    return $next($request);
+  }
 }

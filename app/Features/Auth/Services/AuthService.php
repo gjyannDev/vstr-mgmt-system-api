@@ -15,6 +15,24 @@ class AuthService
 {
     use ApiResponse;
 
+    private const ROLE_ABILITIES = [
+        'super_admin' => ['*'],
+        'admin' => ['admin:access'],
+        'kiosk' => ['kiosk:access'],
+        'customer' => ['customer:access'],
+    ];
+
+    private function resolveAbilities(string $role): array
+    {
+        $abilities = self::ROLE_ABILITIES[$role] ?? [];
+
+        if ($abilities === ['*']) {
+            return $abilities;
+        }
+
+        return ['auth:api', 'role:' . $role, ...$abilities];
+    }
+
     public function __construct(private AuthRepository $repo) {}
 
     public function register(RegisterRequest $request): JsonResponse
@@ -25,14 +43,12 @@ class AuthService
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            'role' => 'admin'
+            'role' => 'admin',
         ]);
 
-        $abilities = $user->role === 'super_admin'
-            ? ['*']
-            : ['admin'];
+        $abilities = $this->resolveAbilities($user->role);
 
-        $token = $this->repo->createToken($user, 'admin-panel', $abilities);
+        $token = $this->repo->createToken($user, 'access-token', $abilities);
 
         return $this->successResponse('Registered successfully.', [
             'user' => $user,
@@ -51,19 +67,13 @@ class AuthService
             ]);
         }
 
-        if (!in_array($user->role, ['admin', 'super_admin'], true)) {
-            throw ValidationException::withMessages([
-                'email' => ['This account is not allowed to access the admin panel.'],
-            ]);
-        }
+        $tokenName = $data['device_name'] ?? 'access-token';
 
-        $tokenName = $data['device_name'] ?? 'admin-panel';
-
-        $abilities = $user->role === 'super_admin'
-            ? ['*']
-            : ['admin'];
+        $abilities = $this->resolveAbilities($user->role);
 
         $token = $this->repo->createToken($user, $tokenName, $abilities);
+
+        $this->repo->update($user->id, ['last_login_at' => now()]);
 
         return $this->successResponse('Logged in successfully.', [
             'user' => $user,
