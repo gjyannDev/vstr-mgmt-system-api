@@ -2,26 +2,29 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Features\Auth\Controllers\AuthController;
+use App\Features\Auth\Controllers\AuthMvpController;
 
 Route::prefix('auth')->group(function () {
-  Route::post('/register', [AuthController::class, 'register']);
-  Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
 
-  Route::middleware(['auth:sanctum', 'ability:auth:api'])->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/me', [AuthController::class, 'me']);
-  });
+    Route::middleware(['auth:sanctum', 'ability:auth:api'])->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/me', [AuthController::class, 'me']);
+        Route::get('/session-check', [AuthMvpController::class, 'sessionCheck']);
+    });
 });
 
-Route::middleware(['auth:sanctum', 'ability:role:super_admin,role:admin'])->prefix('admin')->group(function () {
-  // Register admin module routes here.
-  // Example: require base_path('app/Features/Visitor/Routes/admin.php');
+Route::middleware(['auth:sanctum', 'ability:admin:access'])->prefix('admin')->group(function () {
+    Route::get('/ping', [AuthMvpController::class, 'adminPing']);
 });
 
-Route::middleware(['auth:sanctum', 'ability:role:super_admin,role:kiosk'])->prefix('kiosk')->group(function () {
-  // Register kiosk module routes here.
+Route::middleware(['auth:sanctum', 'ability:kiosk:access'])->prefix('kiosk')->group(function () {
+    Route::get('/ping', [AuthMvpController::class, 'kioskPing']);
+    Route::post('/location-check', [AuthMvpController::class, 'locationCheck'])->middleware('location.lock');
 });
 
-Route::middleware(['auth:sanctum', 'ability:role:super_admin,role:customer'])->prefix('customer')->group(function () {
-  // Register customer module routes here.
+Route::middleware(['auth:sanctum', 'ability:customer:access'])->prefix('customer')->group(function () {
+    Route::get('/ping', [AuthMvpController::class, 'customerPing']);
+    Route::post('/location-check', [AuthMvpController::class, 'locationCheck'])->middleware('location.lock');
 });

@@ -73,7 +73,7 @@ class AuthService
 
         $token = $this->repo->createToken($user, $tokenName, $abilities);
 
-        $this->repo->update($user->id, ['last_login_at' => now()]);
+        $user = $this->repo->update($user->id, ['last_login_at' => now()]);
 
         return $this->successResponse('Logged in successfully.', [
             'user' => $user,
