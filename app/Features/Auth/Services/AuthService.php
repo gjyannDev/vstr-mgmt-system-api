@@ -19,7 +19,6 @@ class AuthService
         'super_admin' => ['*'],
         'admin' => ['admin:access'],
         'kiosk' => ['kiosk:access'],
-        'customer' => ['customer:access'],
     ];
 
     private function resolveAbilities(string $role): array
