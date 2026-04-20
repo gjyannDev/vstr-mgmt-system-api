@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -11,16 +12,20 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['name'])]
 class Location extends Model
 {
-  use HasFactory;
+    use HasFactory, HasUuids;
 
-  public function admins(): BelongsToMany
-  {
-    return $this->belongsToMany(User::class, 'admin_locations')
-      ->withTimestamps();
-  }
+    protected $keyType = 'string';
 
-  public function kiosks(): HasMany
-  {
-    return $this->hasMany(Kiosk::class);
-  }
+    public $incrementing = false;
+
+    public function admins(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'admin_locations')
+            ->withTimestamps();
+    }
+
+    public function kiosks(): HasMany
+    {
+        return $this->hasMany(Kiosk::class);
+    }
 }

@@ -34,7 +34,7 @@ class LocationLockMiddleware
         }
 
         $request->merge([
-            'location_id' => (int) $user->location_id,
+            'location_id' => (string) $user->location_id,
         ]);
 
         return $next($request);
