@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name'])]
+#[Fillable(['tenant_id', 'name', 'type', 'address_line1', 'city', 'state'])]
 class Location extends Model
 {
     use HasFactory, HasUuids;

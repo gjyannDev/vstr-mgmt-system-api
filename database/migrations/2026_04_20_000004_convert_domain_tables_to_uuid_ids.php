@@ -31,6 +31,8 @@ return new class extends Migration {
         ['table' => 'users', 'column' => 'tenant_id', 'references' => 'tenants', 'nullable' => true, 'onDelete' => 'SET NULL'],
         ['table' => 'users', 'column' => 'location_id', 'references' => 'locations', 'nullable' => true, 'onDelete' => 'SET NULL'],
 
+        ['table' => 'locations', 'column' => 'tenant_id', 'references' => 'tenants', 'nullable' => false, 'onDelete' => 'CASCADE'],
+
         ['table' => 'hosts', 'column' => 'tenant_id', 'references' => 'tenants', 'nullable' => false, 'onDelete' => 'CASCADE'],
         ['table' => 'hosts', 'column' => 'location_id', 'references' => 'locations', 'nullable' => false, 'onDelete' => 'CASCADE'],
 
@@ -252,6 +254,8 @@ return new class extends Migration {
             DB::statement("ALTER TABLE `{$tableName}` CHANGE `id` `legacy_id` BIGINT UNSIGNED NOT NULL");
             DB::statement("ALTER TABLE `{$tableName}` CHANGE `id_uuid` `id` CHAR(36) NOT NULL");
             DB::statement("ALTER TABLE `{$tableName}` DROP PRIMARY KEY, ADD PRIMARY KEY (`id`)");
+
+            DB::statement("ALTER TABLE `{$tableName}` MODIFY `legacy_id` BIGINT UNSIGNED NULL");
 
             $legacyIndexName = "{$tableName}_legacy_id_unique";
             if (! $this->hasIndex($tableName, $legacyIndexName)) {
