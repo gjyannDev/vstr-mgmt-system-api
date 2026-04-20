@@ -40,7 +40,7 @@ class AuthMvpController extends Controller
     return $this->successResponse('Location lock applied.', [
       'user_id' => $request->user()?->id,
       'role' => $request->user()?->role,
-      'location_id' => $request->integer('location_id'),
+      'location_id' => $request->input('location_id'),
     ]);
   }
 }

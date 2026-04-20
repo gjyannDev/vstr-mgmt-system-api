@@ -17,14 +17,14 @@ class KioskAdminService
     public function store(StoreKioskRequest $request): JsonResponse
     {
         $user = $request->user();
-        $tenantId = (int) ($user?->tenant_id ?? 0);
+        $tenantId = is_string($user?->tenant_id) ? $user->tenant_id : null;
 
-        if ($tenantId < 1) {
+        if ($tenantId === null || $tenantId === '') {
             return $this->errorResponse('Authenticated admin has no tenant assignment.', null, 422);
         }
 
         $data = $request->validated();
-        $requestedLocationId = (int) $data['location_id'];
+        $requestedLocationId = (string) $data['location_id'];
 
         if (! $user || ! $user->hasAssignedLocation($requestedLocationId)) {
             return $this->errorResponse('Admin can only create kiosks in their assigned location(s).', null, 403);

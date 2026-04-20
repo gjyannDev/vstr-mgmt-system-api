@@ -13,7 +13,7 @@ abstract class BaseRepository
         return $this->model->all();
     }
 
-    public function find(int $id)
+    public function find(string $id)
     {
         return $this->model->find($id);
     }
@@ -23,7 +23,7 @@ abstract class BaseRepository
         return $this->model->create($data);
     }
 
-    public function update(int $id, array $data)
+    public function update(string $id, array $data)
     {
         $record = $this->model->findOrFail($id);
         $record->update($data);
@@ -31,7 +31,7 @@ abstract class BaseRepository
         return $record;
     }
 
-    public function delete(int $id)
+    public function delete(string $id)
     {
         return $this->model->findOrFail($id)->delete();
     }

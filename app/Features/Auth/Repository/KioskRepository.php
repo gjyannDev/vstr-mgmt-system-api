@@ -6,6 +6,7 @@ use App\Models\Kiosk;
 use App\Models\KioskActivationCode;
 use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\PersonalAccessToken;
 
 class KioskRepository extends BaseRepository
@@ -49,7 +50,7 @@ class KioskRepository extends BaseRepository
         return $code;
     }
 
-    public function markActivationCodeAsUsed(int $activationCodeId): bool
+    public function markActivationCodeAsUsed(string $activationCodeId): bool
     {
         $updated = KioskActivationCode::query()
             ->whereKey($activationCodeId)
@@ -60,12 +61,17 @@ class KioskRepository extends BaseRepository
         return $updated === 1;
     }
 
-    public function createVisit(array $data): int
+    public function createVisit(array $data): string
     {
-        return (int) DB::table('visits')->insertGetId($data);
+        $visitId = (string) Str::uuid();
+        $data['id'] = $visitId;
+
+        DB::table('visits')->insert($data);
+
+        return $visitId;
     }
 
-    public function findByVisitId(int $visitId): ?object
+    public function findByVisitId(string $visitId): ?object
     {
         return DB::table('visits')->where('id', $visitId)->first();
     }

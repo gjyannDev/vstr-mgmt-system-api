@@ -28,9 +28,9 @@ class KioskVisitService
     $visitId = $this->kioskRepo->createVisit([
       'tenant_id' => $identity->tenant_id,
       'location_id' => $identity->location_id,
-      'visitor_id' => (int) $data['visitor_id'],
+      'visitor_id' => (string) $data['visitor_id'],
       'host_id' => $data['host_id'] ?? null,
-      'visit_type_id' => (int) $data['visit_type_id'],
+      'visit_type_id' => (string) $data['visit_type_id'],
       'purpose' => $data['purpose'] ?? null,
       'status' => 'checked_in',
       'check_in_at' => $now,
