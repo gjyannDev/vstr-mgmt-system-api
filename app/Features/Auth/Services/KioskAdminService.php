@@ -26,8 +26,8 @@ class KioskAdminService
         $data = $request->validated();
         $requestedLocationId = (int) $data['location_id'];
 
-        if ($user?->location_id && (int) $user->location_id !== $requestedLocationId) {
-            return $this->errorResponse('Admin can only create kiosks in their assigned location.', null, 403);
+        if (! $user || ! $user->hasAssignedLocation($requestedLocationId)) {
+            return $this->errorResponse('Admin can only create kiosks in their assigned location(s).', null, 403);
         }
 
         $kiosk = $this->kioskRepo->createKiosk([
