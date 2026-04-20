@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'location.lock' => \App\Http\Middleware\LocationLockMiddleware::class,
+            'kiosk.device' => \App\Http\Middleware\EnsureKioskDeviceMiddleware::class,
             'abilities' => CheckAbilities::class,
             'ability' => CheckForAnyAbility::class,
         ]);
