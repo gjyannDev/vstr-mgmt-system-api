@@ -12,49 +12,54 @@ use Illuminate\Http\Request;
 
 class LocationService
 {
-  use ApiResponse;
+    use ApiResponse;
 
-  public function __construct(private LocationRepository $locationRepo) {}
+    public function __construct(private LocationRepository $locationRepo) {}
 
-  public function index(Request $request): JsonResponse
-  {
-    $search = $request->query('search');
-    $locations = $this->locationRepo->list(is_string($search) ? $search : null);
+    public function index(Request $request): JsonResponse
+    {
+        $search = $request->query('search');
+        $locations = $this->locationRepo->list([
+            'search' => is_string($search) ? $search : null,
+            'pageIndex' => (int) $request->query('pageIndex', 0),
+            'pageSize' => (int) $request->query('pageSize', 10),
+            'sort' => $request->query('sort', ['created_at' => 'desc']),
+            'with' => $request->query('with', []),
+            'select' => $request->query('select', ['*']),
+        ]);
 
-    return $this->successResponse('Locations fetched successfully.', [
-      'locations' => $locations,
-    ]);
-  }
+        return $this->successResponse('Locations fetched successfully.', $locations);
+    }
 
-  public function store(StoreLocationRequest $request): JsonResponse
-  {
-    $location = $this->locationRepo->createLocation($request->validated());
+    public function store(StoreLocationRequest $request): JsonResponse
+    {
+        $location = $this->locationRepo->createLocation($request->validated());
 
-    return $this->successResponse('Location created successfully.', [
-      'location' => $location,
-    ], 201);
-  }
+        return $this->successResponse('Location created successfully.', [
+            'location' => $location,
+        ], 201);
+    }
 
-  public function show(Location $location): JsonResponse
-  {
-    return $this->successResponse('Location fetched successfully.', [
-      'location' => $location,
-    ]);
-  }
+    public function show(Location $location): JsonResponse
+    {
+        return $this->successResponse('Location fetched successfully.', [
+            'location' => $location,
+        ]);
+    }
 
-  public function update(UpdateLocationRequest $request, Location $location): JsonResponse
-  {
-    $updated = $this->locationRepo->updateLocation($location, $request->validated());
+    public function update(UpdateLocationRequest $request, Location $location): JsonResponse
+    {
+        $updated = $this->locationRepo->updateLocation($location, $request->validated());
 
-    return $this->successResponse('Location updated successfully.', [
-      'location' => $updated,
-    ]);
-  }
+        return $this->successResponse('Location updated successfully.', [
+            'location' => $updated,
+        ]);
+    }
 
-  public function destroy(Location $location): JsonResponse
-  {
-    $this->locationRepo->deleteLocation($location);
+    public function destroy(Location $location): JsonResponse
+    {
+        $this->locationRepo->deleteLocation($location);
 
-    return $this->successResponse('Location deleted successfully.');
-  }
+        return $this->successResponse('Location deleted successfully.');
+    }
 }
