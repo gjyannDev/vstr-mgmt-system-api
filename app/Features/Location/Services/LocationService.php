@@ -19,8 +19,15 @@ class LocationService
     public function index(Request $request): JsonResponse
     {
         $search = $request->query('search');
+        $createdDate = $request->query('createdDate');
+        $type = $request->query('type');
+        $state = $request->query('state');
+
         $locations = $this->locationRepo->list([
             'search' => is_string($search) ? $search : null,
+            'createdDate' => is_string($createdDate) ? $createdDate : null,
+            'type' => is_string($type) ? $type : null,
+            'state' => is_string($state) ? $state : null,
             'pageIndex' => (int) $request->query('pageIndex', 0),
             'pageSize' => (int) $request->query('pageSize', 10),
             'sort' => $request->query('sort', ['created_at' => 'desc']),
@@ -33,7 +40,10 @@ class LocationService
 
     public function store(StoreLocationRequest $request): JsonResponse
     {
-        $location = $this->locationRepo->createLocation($request->validated());
+        $data = $request->validated();
+        $data['tenant_id'] = $request->user()->tenant_id;
+
+        $location = $this->locationRepo->createLocation($data);
 
         return $this->successResponse('Location created successfully.', [
             'location' => $location,
@@ -49,7 +59,10 @@ class LocationService
 
     public function update(UpdateLocationRequest $request, Location $location): JsonResponse
     {
-        $updated = $this->locationRepo->updateLocation($location, $request->validated());
+        $data = $request->validated();
+        $data['tenant_id'] = $request->user()->tenant_id;
+
+        $updated = $this->locationRepo->updateLocation($location, $data);
 
         return $this->successResponse('Location updated successfully.', [
             'location' => $updated,
