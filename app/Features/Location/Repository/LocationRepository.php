@@ -88,7 +88,7 @@ class LocationRepository extends BaseRepository
             $query->where('name', 'like', '%' . $search . '%');
         }
 
-        $rows = $query->select(['id', 'name'])->get()->toArray();
+        $rows = $query->select(['id', 'name', 'address_line1', 'city', 'state'])->get()->toArray();
 
         return ['rows' => $rows];
     }
