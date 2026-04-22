@@ -17,6 +17,7 @@ class StoreVisitTypeRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'requires_approval' => ['boolean'],
+            'is_camera_active' => ['boolean'],
             'active' => ['boolean'],
             'form_fields' => ['nullable', 'array'],
             'form_fields.*.id' => ['sometimes', 'exists:form_fields,id'],
