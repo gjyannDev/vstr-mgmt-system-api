@@ -12,30 +12,35 @@ use Illuminate\Http\Request;
 
 class LocationController extends Controller
 {
-  public function __construct(private LocationService $locationService) {}
+    public function __construct(private LocationService $locationService) {}
 
-  public function index(Request $request): JsonResponse
-  {
-    return $this->locationService->index($request);
-  }
+    public function index(Request $request): JsonResponse
+    {
+        return $this->locationService->index($request);
+    }
 
-  public function store(StoreLocationRequest $request): JsonResponse
-  {
-    return $this->locationService->store($request);
-  }
+    public function listSimple(Request $request): JsonResponse
+    {
+        return $this->locationService->listSimple($request);
+    }
 
-  public function show(Location $location): JsonResponse
-  {
-    return $this->locationService->show($location);
-  }
+    public function store(StoreLocationRequest $request): JsonResponse
+    {
+        return $this->locationService->store($request);
+    }
 
-  public function update(UpdateLocationRequest $request, Location $location): JsonResponse
-  {
-    return $this->locationService->update($request, $location);
-  }
+    public function show(Location $location): JsonResponse
+    {
+        return $this->locationService->show($location);
+    }
 
-  public function destroy(Location $location): JsonResponse
-  {
-    return $this->locationService->destroy($location);
-  }
+    public function update(UpdateLocationRequest $request, Location $location): JsonResponse
+    {
+        return $this->locationService->update($request, $location);
+    }
+
+    public function destroy(Location $location): JsonResponse
+    {
+        return $this->locationService->destroy($location);
+    }
 }

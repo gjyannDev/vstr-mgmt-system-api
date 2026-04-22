@@ -38,6 +38,23 @@ class LocationService
         return $this->successResponse('Locations fetched successfully.', $locations);
     }
 
+    public function listSimple(Request $request): JsonResponse
+    {
+        $search = $request->query('search');
+
+        $params = [
+            'search' => is_string($search) ? $search : null,
+        ];
+
+        if ($request->user()?->tenant_id) {
+            $params['tenant_id'] = $request->user()->tenant_id;
+        }
+
+        $rows = $this->locationRepo->listSimple($params);
+
+        return $this->successResponse('Locations list fetched successfully.', $rows);
+    }
+
     public function store(StoreLocationRequest $request): JsonResponse
     {
         $data = $request->validated();
