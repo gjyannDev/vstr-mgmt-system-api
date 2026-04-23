@@ -101,4 +101,54 @@ class KioskRepository extends BaseRepository
 
         return $kiosk->fresh();
     }
+
+    public function paginateForTenant(string $tenantId, array $params = []): array
+    {
+        $pageIndex = max(0, (int) ($params['pageIndex'] ?? 0));
+        $pageSize = max(1, (int) ($params['pageSize'] ?? 10));
+
+        $filter = $params['filter'] ?? [];
+        // always scope by tenant
+        $filter['tenant_id'] = $tenantId;
+
+        if (! empty($params['location_id'])) {
+            $filter['location_id'] = $params['location_id'];
+        }
+
+        if (! empty($params['search'])) {
+            $filter['name'] = ['like', '%' . $params['search'] . '%'];
+        }
+
+        $with = [
+            'activationCodes' => function ($q) {
+                $q->whereNull('used_at')->where('expires_at', '>', now());
+            },
+        ];
+
+        return $this->findPaginatedData([
+            'filter' => $filter,
+            'pageIndex' => $pageIndex,
+            'pageSize' => $pageSize,
+            'sort' => $params['sort'] ?? ['created_at' => 'desc'],
+            'with' => $with,
+        ]);
+    }
+
+    public function getActiveActivationCodeForKiosk(Kiosk $kiosk): ?KioskActivationCode
+    {
+        return KioskActivationCode::query()
+            ->where('kiosk_id', $kiosk->id)
+            ->whereNull('used_at')
+            ->where('expires_at', '>', now())
+            ->orderBy('created_at', 'desc')
+            ->first();
+    }
+
+    public function expireAllActivationCodes(Kiosk $kiosk): void
+    {
+        KioskActivationCode::query()
+            ->where('kiosk_id', $kiosk->id)
+            ->whereNull('used_at')
+            ->update(['used_at' => now()]);
+    }
 }

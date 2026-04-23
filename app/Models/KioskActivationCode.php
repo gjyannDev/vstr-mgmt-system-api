@@ -9,26 +9,26 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['kiosk_id', 'code_hash', 'expires_at', 'used_at'])]
+#[Fillable(['kiosk_id', 'code_hash', 'expires_at', 'used_at', 'created_by', 'created_ip'])]
 #[Hidden(['code_hash'])]
 class KioskActivationCode extends Model
 {
-  use HasFactory, HasUuids;
+    use HasFactory, HasUuids;
 
-  protected $keyType = 'string';
+    protected $keyType = 'string';
 
-  public $incrementing = false;
+    public $incrementing = false;
 
-  protected function casts(): array
-  {
-    return [
-      'expires_at' => 'datetime',
-      'used_at' => 'datetime',
-    ];
-  }
+    protected function casts(): array
+    {
+        return [
+            'expires_at' => 'datetime',
+            'used_at' => 'datetime',
+        ];
+    }
 
-  public function kiosk(): BelongsTo
-  {
-    return $this->belongsTo(Kiosk::class);
-  }
+    public function kiosk(): BelongsTo
+    {
+        return $this->belongsTo(Kiosk::class);
+    }
 }

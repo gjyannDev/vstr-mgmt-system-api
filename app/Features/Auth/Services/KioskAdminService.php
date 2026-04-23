@@ -4,9 +4,14 @@ namespace App\Features\Auth\Services;
 
 use App\Features\Auth\Repository\KioskRepository;
 use App\Features\Auth\Requests\StoreKioskRequest;
+use App\Features\Auth\Requests\IndexKioskRequest;
 use App\Models\Kiosk;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+use App\Models\KioskActivationCode;
 
 class KioskAdminService
 {
@@ -42,7 +47,9 @@ class KioskAdminService
         $activationCodeRecord = $this->kioskRepo->createActivationCode([
             'kiosk_id' => $kiosk->id,
             'code_hash' => $codeHash,
-            'expires_at' => now()->addMinutes(10),
+            'expires_at' => now()->addMinutes(15),
+            'created_by' => $user?->id,
+            'created_ip' => $request->ip(),
         ]);
 
         return $this->successResponse('Kiosk created successfully.', [
@@ -50,6 +57,114 @@ class KioskAdminService
             'activation_code' => $activationCode,
             'activation_expires_at' => $activationCodeRecord->expires_at,
         ], 201);
+    }
+
+    public function index(IndexKioskRequest $request): JsonResponse
+    {
+        $user = $request->user();
+        $tenantId = is_string($user?->tenant_id) ? $user->tenant_id : null;
+
+        if ($tenantId === null || $tenantId === '') {
+            return $this->errorResponse('Authenticated admin has no tenant assignment.', null, 422);
+        }
+
+        $data = $request->validated();
+
+        $paginated = $this->kioskRepo->paginateForTenant($tenantId, [
+            'pageIndex' => $data['pageIndex'] ?? 0,
+            'pageSize' => $data['pageSize'] ?? 10,
+            'search' => $data['search'] ?? null,
+            'location_id' => $data['location_id'] ?? null,
+        ]);
+
+        // attach active activation expiry if present
+        $rows = $paginated['rows']->map(function ($kiosk) {
+            $active = $this->kioskRepo->getActiveActivationCodeForKiosk($kiosk);
+            $kiosk->setAttribute('active_code_expires_at', $active ? $active->expires_at : null);
+            return $kiosk;
+        })->values();
+
+        return $this->successResponse('Kiosks fetched successfully.', [
+            'rows' => $rows,
+            'totalCount' => $paginated['totalCount'],
+        ]);
+    }
+
+    public function show(Request $request, Kiosk $kiosk): JsonResponse
+    {
+        $user = $request->user();
+        $tenantId = is_string($user?->tenant_id) ? $user->tenant_id : null;
+
+        if ($tenantId === null || $tenantId === '') {
+            return $this->errorResponse('Authenticated admin has no tenant assignment.', null, 422);
+        }
+
+        if (! $user || ! $user->hasAssignedLocation($kiosk->location_id)) {
+            return $this->errorResponse('Admin can only view kiosks in their assigned location(s).', null, 403);
+        }
+
+        $active = $this->kioskRepo->getActiveActivationCodeForKiosk($kiosk);
+        $kiosk->setAttribute('active_code_expires_at', $active ? $active->expires_at : null);
+
+        return $this->successResponse('Kiosk fetched successfully.', ['kiosk' => $kiosk]);
+    }
+
+    public function regenerate(Request $request, Kiosk $kiosk): JsonResponse
+    {
+        $user = $request->user();
+        $tenantId = is_string($user?->tenant_id) ? $user->tenant_id : null;
+
+        if ($tenantId === null || $tenantId === '') {
+            return $this->errorResponse('Authenticated admin has no tenant assignment.', null, 422);
+        }
+
+        if (! $user || ! $user->hasAssignedLocation($kiosk->location_id)) {
+            return $this->errorResponse('Admin can only regenerate codes for kiosks in their assigned location(s).', null, 403);
+        }
+
+        $result = DB::transaction(function () use ($kiosk, $user, $request) {
+            // expire previous codes
+            $this->kioskRepo->expireAllActivationCodes($kiosk);
+
+            [$activationCode, $codeHash] = $this->makeUniqueActivationCode();
+
+            $activationCodeRecord = $this->kioskRepo->createActivationCode([
+                'kiosk_id' => $kiosk->id,
+                'code_hash' => $codeHash,
+                'expires_at' => now()->addMinutes(15),
+                'created_by' => $user?->id,
+                'created_ip' => $request->ip(),
+            ]);
+
+            return [
+                'activation_code' => $activationCode,
+                'activation_expires_at' => $activationCodeRecord->expires_at,
+            ];
+        });
+
+        if (! $result) {
+            return $this->errorResponse('Failed to regenerate activation code.', null, 500);
+        }
+
+        return $this->successResponse('Activation code regenerated successfully.', $result);
+    }
+
+    public function revokeTokens(Request $request, Kiosk $kiosk): JsonResponse
+    {
+        $user = $request->user();
+        $tenantId = is_string($user?->tenant_id) ? $user->tenant_id : null;
+
+        if ($tenantId === null || $tenantId === '') {
+            return $this->errorResponse('Authenticated admin has no tenant assignment.', null, 422);
+        }
+
+        if (! $user || ! $user->hasAssignedLocation($kiosk->location_id)) {
+            return $this->errorResponse('Admin can only revoke tokens for kiosks in their assigned location(s).', null, 403);
+        }
+
+        $this->kioskRepo->deleteAllTokens($kiosk);
+
+        return $this->successResponse('Kiosk tokens revoked successfully.');
     }
 
     private function makeUniqueActivationCode(): array
