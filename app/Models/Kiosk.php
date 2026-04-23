@@ -8,45 +8,51 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Models\VisitType;
 use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable(['tenant_id', 'location_id', 'visit_type_id', 'name', 'status', 'last_seen_at'])]
 class Kiosk extends Model
 {
-  use HasFactory, HasApiTokens, HasUuids;
+    use HasFactory, HasApiTokens, HasUuids;
 
-  protected $keyType = 'string';
+    protected $keyType = 'string';
 
-  public $incrementing = false;
+    public $incrementing = false;
 
-  public const STATUS_ACTIVE = 'active';
-  public const STATUS_DISABLED = 'disabled';
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_DISABLED = 'disabled';
 
-  protected function casts(): array
-  {
-    return [
-      'last_seen_at' => 'datetime',
-    ];
-  }
+    protected function casts(): array
+    {
+        return [
+            'last_seen_at' => 'datetime',
+        ];
+    }
 
-  public function activationCodes(): HasMany
-  {
-    return $this->hasMany(KioskActivationCode::class);
-  }
+    public function activationCodes(): HasMany
+    {
+        return $this->hasMany(KioskActivationCode::class);
+    }
 
-  public function visitType(): BelongsTo
-  {
-    return $this->belongsTo(VisitType::class, 'visit_type_id');
-  }
+    public function visitType(): BelongsTo
+    {
+        return $this->belongsTo(VisitType::class, 'visit_type_id');
+    }
 
-  public function isActive(): bool
-  {
-    return $this->status === self::STATUS_ACTIVE;
-  }
+    public function visitTypes(): BelongsToMany
+    {
+        return $this->belongsToMany(VisitType::class, 'kiosk_visit_types', 'kiosk_id', 'visit_type_id');
+    }
 
-  public function isDisabled(): bool
-  {
-    return $this->status === self::STATUS_DISABLED;
-  }
+    public function isActive(): bool
+    {
+        return $this->status === self::STATUS_ACTIVE;
+    }
+
+    public function isDisabled(): bool
+    {
+        return $this->status === self::STATUS_DISABLED;
+    }
 }

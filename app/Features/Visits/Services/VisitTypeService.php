@@ -50,7 +50,19 @@ class VisitTypeService
 
         // If kiosk client, return a simplified payload (no admin-only fields)
         if ($user instanceof Kiosk) {
-            $assigned = $user->visit_type_id ?? null;
+            // collect assigned visit type ids from legacy column and many-to-many relation
+            $assignedList = [];
+            if (! empty($user->visit_type_id)) {
+                $assignedList[] = (string) $user->visit_type_id;
+            }
+
+            // try to load relation ids (will query if not loaded)
+            try {
+                $relationIds = $user->relationLoaded('visitTypes') ? $user->visitTypes->pluck('id')->toArray() : $user->visitTypes()->pluck('id')->toArray();
+                $assignedList = array_unique(array_merge($assignedList, $relationIds));
+            } catch (\Throwable $e) {
+                // ignore relation load errors and rely on legacy column
+            }
 
             // helper to transform a VisitType model into kiosk-safe array
             $transform = function ($vt) {
@@ -73,14 +85,21 @@ class VisitTypeService
                 ];
             };
 
-            if (! empty($assigned)) {
-                $vt = $rows['rows']->firstWhere('id', $assigned);
-                if (! $vt) {
+            // if kiosk has assigned visit types, filter to those only
+            if (! empty($assignedList)) {
+                $matched = $rows['rows']->filter(function ($vt) use ($assignedList) {
+                    return in_array((string) $vt->id, $assignedList, true);
+                })->values();
+
+                if ($matched->isEmpty()) {
                     return $this->successResponse('Visit types fetched successfully.', ['rows' => [], 'totalCount' => 0]);
                 }
 
-                $t = $transform($vt);
-                return $this->successResponse('Visit types fetched successfully.', ['rows' => [$t], 'totalCount' => 1]);
+                $transformed = $matched->map(function ($vt) use ($transform) {
+                    return $transform($vt);
+                })->values()->toArray();
+
+                return $this->successResponse('Visit types fetched successfully.', ['rows' => $transformed, 'totalCount' => count($transformed)]);
             }
 
             $transformed = $rows['rows']->map(function ($vt) use ($transform) {

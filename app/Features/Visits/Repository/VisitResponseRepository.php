@@ -36,7 +36,48 @@ class VisitResponseRepository
     {
         $now = now();
 
-        // Accept either map of form_field_id => value, or array of objects with form_field_id/value
+        // Load visit to help resolve form fields by visit_type when names are provided
+        $visit = DB::table('visits')->where('id', $visitId)->first();
+        $visitTypeId = $visit->visit_type_id ?? null;
+
+        // simple cache for name -> id lookups
+        $fieldCache = [];
+
+        $resolveFieldId = function ($raw) use ($locationId, $visitTypeId, &$fieldCache) {
+            if (! $raw) {
+                return null;
+            }
+
+            // already cached
+            if (isset($fieldCache[$raw])) {
+                return $fieldCache[$raw];
+            }
+
+            // try treat as id first
+            $byId = DB::table('form_fields')->where('id', $raw)->first();
+            if ($byId) {
+                $fieldCache[$raw] = $byId->id;
+                return $byId->id;
+            }
+
+            // fallback: lookup by name scoped to location and visit type
+            $q = DB::table('form_fields')->where('name', $raw)->where('location_id', $locationId);
+            if ($visitTypeId) {
+                $q->where('visit_type_id', $visitTypeId);
+            }
+
+            $byName = $q->first();
+            if ($byName) {
+                $fieldCache[$raw] = $byName->id;
+                return $byName->id;
+            }
+
+            // not found
+            $fieldCache[$raw] = null;
+            return null;
+        };
+
+        // Accept either map of form_field_id/name => value, or array of objects with form_field_id/value
         if (array_values($formData) === $formData) {
             // indexed array
             foreach ($formData as $entry) {
@@ -44,24 +85,65 @@ class VisitResponseRepository
                     continue;
                 }
 
-                $fieldId = $entry['form_field_id'] ?? null;
+                // entry may provide either 'form_field_id' (id or name) or 'name'
+                $rawField = $entry['form_field_id'] ?? ($entry['name'] ?? null);
                 $value = $entry['value'] ?? null;
+
+                $fieldId = $resolveFieldId($rawField);
 
                 if (! $fieldId) {
                     continue;
                 }
 
-                DB::table('visit_responses')->updateOrInsert(
-                    ['visit_id' => $visitId, 'form_field_id' => $fieldId],
-                    ['location_id' => $locationId, 'value' => (string) $value, 'updated_at' => $now, 'created_at' => $now]
-                );
+                $existing = DB::table('visit_responses')
+                    ->where('visit_id', $visitId)
+                    ->where('form_field_id', $fieldId)
+                    ->first();
+
+                if ($existing) {
+                    DB::table('visit_responses')
+                        ->where('id', $existing->id)
+                        ->update(['location_id' => $locationId, 'value' => (string) $value, 'updated_at' => $now]);
+                } else {
+                    DB::table('visit_responses')->insert([
+                        'id' => (string) Str::uuid(),
+                        'visit_id' => $visitId,
+                        'form_field_id' => $fieldId,
+                        'location_id' => $locationId,
+                        'value' => (string) $value,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]);
+                }
             }
         } else {
-            foreach ($formData as $fieldId => $value) {
-                DB::table('visit_responses')->updateOrInsert(
-                    ['visit_id' => $visitId, 'form_field_id' => $fieldId],
-                    ['location_id' => $locationId, 'value' => (string) $value, 'updated_at' => $now, 'created_at' => $now]
-                );
+            foreach ($formData as $rawField => $value) {
+                $fieldId = $resolveFieldId($rawField);
+
+                if (! $fieldId) {
+                    continue;
+                }
+
+                $existing = DB::table('visit_responses')
+                    ->where('visit_id', $visitId)
+                    ->where('form_field_id', $fieldId)
+                    ->first();
+
+                if ($existing) {
+                    DB::table('visit_responses')
+                        ->where('id', $existing->id)
+                        ->update(['location_id' => $locationId, 'value' => (string) $value, 'updated_at' => $now]);
+                } else {
+                    DB::table('visit_responses')->insert([
+                        'id' => (string) Str::uuid(),
+                        'visit_id' => $visitId,
+                        'form_field_id' => $fieldId,
+                        'location_id' => $locationId,
+                        'value' => (string) $value,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]);
+                }
             }
         }
     }

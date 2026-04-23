@@ -7,12 +7,12 @@ use App\Features\Auth\Requests\StoreKioskRequest;
 use App\Features\Auth\Requests\IndexKioskRequest;
 use App\Features\Auth\Requests\UpdateKioskRequest;
 use App\Models\Kiosk;
+use App\Models\KioskActivationCode;
+use App\Models\VisitType;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
-use App\Models\KioskActivationCode;
 
 class KioskAdminService
 {
@@ -32,10 +32,15 @@ class KioskAdminService
     $data = $request->validated();
     $requestedLocationId = (string) $data['location_id'];
 
-    // validate visit_type_id belongs to the requested location if provided
-    $visitTypeId = $data['visit_type_id'] ?? null;
-    if (! empty($visitTypeId)) {
-      $vt = \App\Models\VisitType::find($visitTypeId);
+    // normalize visit type ids (support both singular and array payloads)
+    $visitTypeIds = $data['visit_type_ids'] ?? [];
+    if (empty($visitTypeIds) && ! empty($data['visit_type_id'])) {
+      $visitTypeIds = [$data['visit_type_id']];
+    }
+
+    // validate provided visit types belong to the requested location
+    foreach ($visitTypeIds as $vtId) {
+      $vt = VisitType::find($vtId);
       if (! $vt) {
         return $this->errorResponse('Visit type not found.', null, 422);
       }
@@ -48,13 +53,14 @@ class KioskAdminService
       return $this->errorResponse('Admin can only create kiosks in their assigned location(s).', null, 403);
     }
 
-    $kiosk = $this->kioskRepo->createKiosk([
+    $kioskPayload = [
       'tenant_id' => $tenantId,
       'location_id' => $requestedLocationId,
-      'visit_type_id' => $data['visit_type_id'] ?? null,
       'name' => $data['name'],
       'status' => $data['status'] ?? Kiosk::STATUS_ACTIVE,
-    ]);
+    ];
+
+    $kiosk = $this->kioskRepo->createKiosk($kioskPayload);
 
     [$activationCode, $codeHash] = $this->makeUniqueActivationCode();
 
@@ -65,6 +71,14 @@ class KioskAdminService
       'created_by' => $user?->id,
       'created_ip' => $request->ip(),
     ]);
+
+    // persist many-to-many visit type associations (if provided)
+    if (! empty($visitTypeIds)) {
+      $kiosk->visitTypes()->sync($visitTypeIds);
+
+      // keep legacy single column for backwards compatibility set to first id
+      $kiosk->forceFill(['visit_type_id' => $visitTypeIds[0]])->save();
+    }
 
     return $this->successResponse('Kiosk created successfully.', [
       'kiosk' => $kiosk,
@@ -91,10 +105,17 @@ class KioskAdminService
       'location_id' => $data['location_id'] ?? null,
     ]);
 
-    // attach active activation expiry if present
+    // attach active activation expiry + visit type ids if present
     $rows = $paginated['rows']->map(function ($kiosk) {
       $active = $this->kioskRepo->getActiveActivationCodeForKiosk($kiosk);
       $kiosk->setAttribute('active_code_expires_at', $active ? $active->expires_at : null);
+
+      // if visitTypes relation loaded, expose ids and simple objects
+      if ($kiosk->relationLoaded('visitTypes')) {
+        $kiosk->setAttribute('visit_type_ids', $kiosk->visitTypes->pluck('id')->toArray());
+        $kiosk->setAttribute('visit_types', $kiosk->visitTypes->map(fn($t) => ['id' => $t->id, 'name' => $t->name])->toArray());
+      }
+
       return $kiosk;
     })->values();
 
@@ -120,6 +141,11 @@ class KioskAdminService
     $active = $this->kioskRepo->getActiveActivationCodeForKiosk($kiosk);
     $kiosk->setAttribute('active_code_expires_at', $active ? $active->expires_at : null);
 
+    // load visit types and expose simple arrays for frontend
+    $kiosk->loadMissing('visitTypes');
+    $kiosk->setAttribute('visit_type_ids', $kiosk->visitTypes->pluck('id')->toArray());
+    $kiosk->setAttribute('visit_types', $kiosk->visitTypes->map(fn($t) => ['id' => $t->id, 'name' => $t->name])->toArray());
+
     return $this->successResponse('Kiosk fetched successfully.', ['kiosk' => $kiosk]);
   }
 
@@ -142,10 +168,16 @@ class KioskAdminService
       return $this->errorResponse('Admin cannot assign kiosk to an unassigned location.', null, 403);
     }
 
-    // validate visit_type belongs to the target location if provided
-    if (! empty($data['visit_type_id'])) {
-      $vt = \App\Models\VisitType::find($data['visit_type_id']);
-      $targetLocation = $data['location_id'] ?? $kiosk->location_id;
+    // normalize visit type ids (support both singular and array payloads)
+    $visitTypeIds = $data['visit_type_ids'] ?? [];
+    if (empty($visitTypeIds) && ! empty($data['visit_type_id'])) {
+      $visitTypeIds = [$data['visit_type_id']];
+    }
+
+    // validate provided visit types belong to the target location if provided
+    $targetLocation = $data['location_id'] ?? $kiosk->location_id;
+    foreach ($visitTypeIds as $vtId) {
+      $vt = VisitType::find($vtId);
       if (! $vt) {
         return $this->errorResponse('Visit type not found.', null, 422);
       }
@@ -169,6 +201,19 @@ class KioskAdminService
     }
 
     $updated = $this->kioskRepo->update($kiosk->id, $updateData);
+
+    // persist many-to-many visit type associations if provided
+    if (! empty($visitTypeIds)) {
+      $updated->visitTypes()->sync($visitTypeIds);
+
+      // keep legacy single column for backwards compatibility set to first id
+      $updated->forceFill(['visit_type_id' => $visitTypeIds[0]])->save();
+    }
+
+    // refresh visit types attributes for response
+    $updated->loadMissing('visitTypes');
+    $updated->setAttribute('visit_type_ids', $updated->visitTypes->pluck('id')->toArray());
+    $updated->setAttribute('visit_types', $updated->visitTypes->map(fn($t) => ['id' => $t->id, 'name' => $t->name])->toArray());
 
     return $this->successResponse('Kiosk updated successfully.', ['kiosk' => $updated]);
   }
