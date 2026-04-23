@@ -9,6 +9,7 @@ use App\Features\Visits\Requests\StoreFormFieldRequest;
 use App\Models\FormField;
 use App\Models\VisitType;
 use App\Models\Location;
+use App\Models\Kiosk;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -45,6 +46,50 @@ class VisitTypeService
 
         $rows = $this->visitTypeRepo->list($params);
 
+        $user = $request->user();
+
+        // If kiosk client, return a simplified payload (no admin-only fields)
+        if ($user instanceof Kiosk) {
+            $assigned = $user->visit_type_id ?? null;
+
+            // helper to transform a VisitType model into kiosk-safe array
+            $transform = function ($vt) {
+                return [
+                    'id' => $vt->id,
+                    'name' => $vt->name,
+                    'description' => $vt->description ?? null,
+                    'is_camera_active' => (bool) ($vt->is_camera_active ?? false),
+                    'form_fields' => $vt->formFields->map(function ($f) {
+                        return [
+                            'id' => $f->id,
+                            'label' => $f->label,
+                            'name' => $f->name,
+                            'type' => $f->type,
+                            'required' => (bool) ($f->required ?? false),
+                            'options' => $f->options ?? [],
+                            'placeholder' => $f->placeholder ?? null,
+                        ];
+                    })->values()->toArray(),
+                ];
+            };
+
+            if (! empty($assigned)) {
+                $vt = $rows['rows']->firstWhere('id', $assigned);
+                if (! $vt) {
+                    return $this->successResponse('Visit types fetched successfully.', ['rows' => [], 'totalCount' => 0]);
+                }
+
+                $t = $transform($vt);
+                return $this->successResponse('Visit types fetched successfully.', ['rows' => [$t], 'totalCount' => 1]);
+            }
+
+            $transformed = $rows['rows']->map(function ($vt) use ($transform) {
+                return $transform($vt);
+            })->values()->toArray();
+
+            return $this->successResponse('Visit types fetched successfully.', ['rows' => $transformed, 'totalCount' => count($transformed)]);
+        }
+
         return $this->successResponse('Visit types fetched successfully.', $rows);
     }
 
@@ -74,13 +119,38 @@ class VisitTypeService
         return $this->successResponse('Visit type created successfully.', ['visit_type' => $created], 201);
     }
 
-    public function show(Location $location, VisitType $visitType): JsonResponse
+    public function show(Request $request, Location $location, VisitType $visitType): JsonResponse
     {
         if ((string) $visitType->location_id !== (string) $location->id) {
             return $this->errorResponse('Visit type does not belong to this location.', null, 404);
         }
 
         $visitType->load('formFields');
+
+        $user = $request->user();
+
+        if ($user instanceof Kiosk) {
+            $vt = $visitType;
+            $transformed = [
+                'id' => $vt->id,
+                'name' => $vt->name,
+                'description' => $vt->description ?? null,
+                'is_camera_active' => (bool) ($vt->is_camera_active ?? false),
+                'form_fields' => $vt->formFields->map(function ($f) {
+                    return [
+                        'id' => $f->id,
+                        'label' => $f->label,
+                        'name' => $f->name,
+                        'type' => $f->type,
+                        'required' => (bool) ($f->required ?? false),
+                        'options' => $f->options ?? [],
+                        'placeholder' => $f->placeholder ?? null,
+                    ];
+                })->values()->toArray(),
+            ];
+
+            return $this->successResponse('Visit type fetched successfully.', ['visit_type' => $transformed]);
+        }
 
         return $this->successResponse('Visit type fetched successfully.', ['visit_type' => $visitType]);
     }

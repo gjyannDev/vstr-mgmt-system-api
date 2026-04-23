@@ -4,7 +4,7 @@ namespace App\Features\Auth\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreKioskRequest extends FormRequest
+class UpdateKioskRequest extends FormRequest
 {
   public function authorize(): bool
   {
@@ -15,7 +15,7 @@ class StoreKioskRequest extends FormRequest
   {
     return [
       'name' => ['required', 'string', 'max:255'],
-      'location_id' => ['required', 'uuid', 'exists:locations,id'],
+      'location_id' => ['nullable', 'uuid', 'exists:locations,id'],
       'visit_type_id' => ['nullable', 'uuid', 'exists:visit_types,id'],
       'status' => ['nullable', 'string', 'in:active,disabled'],
     ];

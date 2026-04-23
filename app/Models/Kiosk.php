@@ -7,9 +7,11 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\VisitType;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['tenant_id', 'location_id', 'name', 'status', 'last_seen_at'])]
+#[Fillable(['tenant_id', 'location_id', 'visit_type_id', 'name', 'status', 'last_seen_at'])]
 class Kiosk extends Model
 {
   use HasFactory, HasApiTokens, HasUuids;
@@ -31,6 +33,11 @@ class Kiosk extends Model
   public function activationCodes(): HasMany
   {
     return $this->hasMany(KioskActivationCode::class);
+  }
+
+  public function visitType(): BelongsTo
+  {
+    return $this->belongsTo(VisitType::class, 'visit_type_id');
   }
 
   public function isActive(): bool

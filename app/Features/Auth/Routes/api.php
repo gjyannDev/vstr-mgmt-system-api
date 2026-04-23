@@ -22,6 +22,7 @@ Route::middleware(['auth:sanctum', 'ability:admin:access'])->prefix('admin')->gr
   Route::get('/ping', [AuthMvpController::class, 'adminPing']);
   Route::get('/kiosks', [KioskAdminController::class, 'index']);
   Route::post('/kiosks', [KioskAdminController::class, 'store']);
+  Route::put('/kiosks/{kiosk}', [KioskAdminController::class, 'update']);
   Route::get('/kiosks/{kiosk}', [KioskAdminController::class, 'show']);
   Route::post('/kiosks/{kiosk}/regenerate', [KioskAdminController::class, 'regenerate']);
   Route::post('/kiosks/{kiosk}/revoke-tokens', [KioskAdminController::class, 'revokeTokens']);
