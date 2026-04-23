@@ -121,6 +121,12 @@ class VisitResponseService
         $email = $visitor['email'] ?? null;
         $phone = $visitor['phone'] ?? null;
 
+        // If no identifying info provided, create a new visitor record.
+        if (empty($email) && empty($phone)) {
+            $create = array_merge($visitor, ['tenant_id' => $tenantId, 'location_id' => $locationId]);
+            return $this->repo->createVisitor($create);
+        }
+
         $found = $this->repo->findVisitorByEmailPhone($tenantId, $locationId, $email, $phone);
 
         if ($found) {

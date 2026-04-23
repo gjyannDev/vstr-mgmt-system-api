@@ -176,15 +176,24 @@ class VisitResponseRepository
 
     public function findVisitorByEmailPhone(string $tenantId, string $locationId, ?string $email, ?string $phone): ?object
     {
-        $query = DB::table('visitors')->where('tenant_id', $tenantId)->where('location_id', $locationId);
-
-        if ($email) {
-            $query->where('email', $email);
+        // If no identifying info provided, don't try to match existing visitors.
+        if (empty($email) && empty($phone)) {
+            return null;
         }
 
-        if ($phone) {
-            $query->orWhere('phone', $phone);
-        }
+        $query = DB::table('visitors')
+            ->where('tenant_id', $tenantId)
+            ->where('location_id', $locationId);
+
+        // Scope email/phone lookup together so the OR does not escape tenant/location constraints.
+        $query->where(function ($q) use ($email, $phone) {
+            if (! empty($email)) {
+                $q->where('email', $email);
+            }
+            if (! empty($phone)) {
+                $q->orWhere('phone', $phone);
+            }
+        });
 
         return $query->first();
     }
