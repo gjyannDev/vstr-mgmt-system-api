@@ -39,9 +39,16 @@ class VisitResponseService
 
                 // handle image upload if base64 provided
                 if (empty($data['image_url']) && ! empty($data['image_base64'])) {
+                    logger()->info('imagekit:attempt_upload', ['visitor' => $visitorId, 'base64_length' => strlen($data['image_base64'])]);
                     $uploaded = $this->imageKit->uploadBase64($data['image_base64']);
                     if ($uploaded) {
-                        $this->repo->updateVisitor($visitorId, ['photo_url' => $uploaded]);
+                        logger()->info('imagekit:uploaded', ['visitor' => $visitorId, 'url' => $uploaded]);
+                        $updated = $this->repo->updateVisitor($visitorId, ['photo_url' => $uploaded]);
+                        if (! $updated) {
+                            logger()->error('imagekit:update_visitor_failed', ['visitor' => $visitorId, 'photo_url' => $uploaded]);
+                        }
+                    } else {
+                        logger()->warning('imagekit:upload_failed', ['visitor' => $visitorId]);
                     }
                 }
 
