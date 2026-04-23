@@ -212,4 +212,79 @@ class VisitResponseService
 
         return $this->successResponse('Visit fetched successfully.', $payload);
     }
+
+    public function showByIdNumber(Request $request, string $idNumber): JsonResponse
+    {
+        $identity = $request->user();
+
+        $tenantId = $identity->tenant_id ?? null;
+        $locationId = $identity->location_id ?? null;
+
+        if (! $tenantId || ! $locationId) {
+            return $this->errorResponse('Invalid kiosk identity.', null, 403);
+        }
+
+        $visitor = DB::table('visitors')
+            ->where('tenant_id', $tenantId)
+            ->where('location_id', $locationId)
+            ->where('id_number', $idNumber)
+            ->first();
+
+        if (! $visitor) {
+            return $this->errorResponse('Visitor not found for given ID.', null, 404);
+        }
+
+        $visit = DB::table('visits')
+            ->where('visitor_id', $visitor->id)
+            ->where('location_id', $locationId)
+            ->orderByDesc('created_at')
+            ->first();
+
+        if (! $visit) {
+            return $this->errorResponse('No visit found for this visitor.', null, 404);
+        }
+
+        $agg = $this->repo->findVisitAggregate($visit->id);
+
+        $payload = [
+            'visit' => $agg['visit'],
+            'visitor' => $agg['visitor'],
+            'form_data' => $agg['form_data'],
+        ];
+
+        return $this->successResponse('Visit fetched successfully.', $payload);
+    }
+
+    public function checkout(Request $request, string $visitId): JsonResponse
+    {
+        $identity = $request->user();
+
+        $tenantId = $identity->tenant_id ?? null;
+        $locationId = $identity->location_id ?? null;
+
+        if (! $tenantId || ! $locationId) {
+            return $this->errorResponse('Invalid kiosk identity.', null, 403);
+        }
+
+        $visit = $this->repo->findVisitById($visitId);
+        if (! $visit) {
+            return $this->errorResponse('Visit not found.', null, 404);
+        }
+
+        if ((string) ($visit->location_id ?? '') !== (string) $locationId) {
+            return $this->errorResponse('Visit does not belong to this kiosk location.', null, 403);
+        }
+
+        if (! empty($visit->status) && $visit->status === 'checked_out') {
+            return $this->successResponse('Visit already checked out.', ['visit_id' => $visitId]);
+        }
+
+        $updated = $this->repo->updateVisit($visitId, ['status' => 'checked_out', 'check_out_at' => now(), 'updated_at' => now()]);
+
+        if (! $updated) {
+            return $this->errorResponse('Failed to checkout visit.', null, 500);
+        }
+
+        return $this->successResponse('Visit checked out successfully.', ['visit_id' => $visitId]);
+    }
 }

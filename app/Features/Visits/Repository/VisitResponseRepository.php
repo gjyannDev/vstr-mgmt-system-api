@@ -153,6 +153,17 @@ class VisitResponseRepository
         $visitorId = (string) Str::uuid();
         $now = now();
 
+        // Ensure we have an id_number for this visitor. If none provided, generate
+        // a short numeric code (6 digits) that's unique across visitors.
+        if (empty($data['id_number'])) {
+            do {
+                $candidate = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+                $exists = DB::table('visitors')->where('id_number', $candidate)->exists();
+            } while ($exists);
+
+            $data['id_number'] = $candidate;
+        }
+
         $row = array_merge(
             [
                 'id' => $visitorId,
@@ -163,6 +174,7 @@ class VisitResponseRepository
                 'phone' => $data['phone'] ?? null,
                 'company' => $data['company'] ?? null,
                 'photo_url' => $data['photo_url'] ?? null,
+                'id_number' => $data['id_number'] ?? null,
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
