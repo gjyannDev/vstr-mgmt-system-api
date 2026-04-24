@@ -46,6 +46,11 @@ class Kiosk extends Model
         return $this->belongsToMany(VisitType::class, 'kiosk_visit_types', 'kiosk_id', 'visit_type_id');
     }
 
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class, 'location_id');
+    }
+
     public function isActive(): bool
     {
         return $this->status === self::STATUS_ACTIVE;
