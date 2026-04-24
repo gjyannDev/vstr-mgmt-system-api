@@ -50,6 +50,13 @@ class LocationService
             $params['tenant_id'] = $request->user()->tenant_id;
         }
 
+        // If the current user is a regular admin (not super_admin), restrict
+        // the list to locations assigned to that admin.
+        $user = $request->user();
+        if ($user && method_exists($user, 'isAdmin') ? $user->isAdmin() : ($user->role === 'admin')) {
+            $params['admin_id'] = $user->id;
+        }
+
         $rows = $this->locationRepo->listSimple($params);
 
         return $this->successResponse('Locations list fetched successfully.', $rows);

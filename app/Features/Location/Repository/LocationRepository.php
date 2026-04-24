@@ -78,10 +78,19 @@ class LocationRepository extends BaseRepository
     {
         $search = $params['search'] ?? null;
 
+        // Optionally filter locations by an assigned admin user id
+        $adminId = $params['admin_id'] ?? null;
+
         $query = $this->model->newQuery();
 
         if (isset($params['tenant_id'])) {
             $query->where('tenant_id', $params['tenant_id']);
+        }
+
+        if (! empty($adminId)) {
+            $query->whereHas('admins', function ($q) use ($adminId) {
+                $q->where('id', $adminId);
+            });
         }
 
         if (is_string($search) && $search !== '') {
