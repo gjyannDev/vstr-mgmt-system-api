@@ -1,0 +1,1191 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "VSTR Management System API",
+        "description": "Visitor Management System API Documentation",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000/api",
+            "description": "Local Server"
+        },
+        {
+            "url": "https://api.vstrmgmt.com",
+            "description": "Production Server"
+        },
+        {
+            "url": "https://staging-api.vstrmgmt.com",
+            "description": "Staging Server"
+        }
+    ],
+    "paths": {
+        "/admin/kiosks": {
+            "get": {
+                "tags": [
+                    "Kiosks"
+                ],
+                "summary": "List kiosks",
+                "description": "List kiosks for admin",
+                "operationId": "listKiosks",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Kiosks"
+                ],
+                "summary": "Create kiosk",
+                "description": "Create a new kiosk",
+                "operationId": "createKiosk",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/admin/kiosks/{kiosk}": {
+            "get": {
+                "tags": [
+                    "Kiosks"
+                ],
+                "summary": "Show kiosk",
+                "description": "Retrieve a kiosk",
+                "operationId": "showKiosk",
+                "parameters": [
+                    {
+                        "name": "kiosk",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Kiosks"
+                ],
+                "summary": "Update kiosk",
+                "description": "Update a kiosk",
+                "operationId": "updateKiosk",
+                "parameters": [
+                    {
+                        "name": "kiosk",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/admin/kiosks/{kiosk}/regenerate": {
+            "post": {
+                "tags": [
+                    "Kiosks"
+                ],
+                "summary": "Regenerate kiosk credentials",
+                "description": "Regenerate kiosk secret/credentials",
+                "operationId": "regenerateKiosk",
+                "parameters": [
+                    {
+                        "name": "kiosk",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/admin/kiosks/{kiosk}/revoke-tokens": {
+            "post": {
+                "tags": [
+                    "Kiosks"
+                ],
+                "summary": "Revoke kiosk tokens",
+                "description": "Revoke kiosk tokens",
+                "operationId": "revokeKioskTokens",
+                "parameters": [
+                    {
+                        "name": "kiosk",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/auth/me": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Get current user",
+                "description": "Returns authenticated user",
+                "operationId": "getCurrentUser",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "John Doe"
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "example": "john@example.com"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Register a user",
+                "description": "Register a new user",
+                "operationId": "registerUser",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Login user",
+                "description": "Authenticate a user and return token",
+                "operationId": "loginUser",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Logout",
+                "description": "Logout authenticated user",
+                "operationId": "logoutUser",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/auth/session-check": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Session check",
+                "description": "Check authenticated session",
+                "operationId": "sessionCheck",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/admin/ping": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Admin ping",
+                "description": "Ping for admin routes",
+                "operationId": "adminPing",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/kiosk/ping": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Kiosk ping",
+                "description": "Ping for kiosk routes",
+                "operationId": "kioskPing",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/kiosk/location-check": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Location check",
+                "description": "Check location lock for kiosk",
+                "operationId": "locationCheck",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/kiosk/activate": {
+            "post": {
+                "tags": [
+                    "Kiosk"
+                ],
+                "summary": "Activate kiosk",
+                "description": "Activate a kiosk device",
+                "operationId": "activateKiosk",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/kiosk/me": {
+            "get": {
+                "tags": [
+                    "Kiosk"
+                ],
+                "summary": "Get current kiosk user",
+                "description": "Returns authenticated kiosk user",
+                "operationId": "getKioskCurrentUser",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/kiosk/logout": {
+            "post": {
+                "tags": [
+                    "Kiosk"
+                ],
+                "summary": "Logout kiosk",
+                "description": "Logout kiosk session",
+                "operationId": "logoutKiosk",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/super-admin/locations": {
+            "get": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "List locations",
+                "description": "List locations (super-admin/admin)",
+                "operationId": "listLocations",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "Create location",
+                "description": "Create a new location",
+                "operationId": "createLocation",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/super-admin/locations/list": {
+            "get": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "List simple locations",
+                "description": "Return a simple list of locations",
+                "operationId": "listSimpleLocations",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/super-admin/locations/{location}": {
+            "get": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "Show location",
+                "description": "Retrieve location details",
+                "operationId": "showLocation",
+                "parameters": [
+                    {
+                        "name": "location",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "Update location",
+                "description": "Update a location",
+                "operationId": "updateLocation",
+                "parameters": [
+                    {
+                        "name": "location",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "Delete location",
+                "description": "Delete a location",
+                "operationId": "deleteLocation",
+                "parameters": [
+                    {
+                        "name": "location",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/admin/locations/{location}/visits": {
+            "get": {
+                "tags": [
+                    "Visits"
+                ],
+                "summary": "List visits (admin)",
+                "description": "List visits for a location (admin)",
+                "operationId": "adminListVisits",
+                "parameters": [
+                    {
+                        "name": "location",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/admin/locations/{location}/visit-types": {
+            "get": {
+                "tags": [
+                    "VisitTypes"
+                ],
+                "summary": "List visit types (admin)",
+                "description": "List visit types for a location (admin)",
+                "operationId": "adminListVisitTypes",
+                "parameters": [
+                    {
+                        "name": "location",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "VisitTypes"
+                ],
+                "summary": "Create visit type",
+                "description": "Create a visit type for a location",
+                "operationId": "adminStoreVisitType",
+                "parameters": [
+                    {
+                        "name": "location",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/kiosk/locations/{location}/visit-types": {
+            "get": {
+                "tags": [
+                    "VisitTypes"
+                ],
+                "summary": "List visit types (kiosk)",
+                "description": "List visit types for a location (kiosk)",
+                "operationId": "kioskListVisitTypes",
+                "parameters": [
+                    {
+                        "name": "location",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/admin/locations/{location}/visit-types/{visit_type}": {
+            "get": {
+                "tags": [
+                    "VisitTypes"
+                ],
+                "summary": "Show visit type (admin)",
+                "description": "Retrieve a visit type",
+                "operationId": "adminShowVisitType",
+                "parameters": [
+                    {
+                        "name": "location",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "visit_type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "VisitTypes"
+                ],
+                "summary": "Update visit type",
+                "description": "Update a visit type for a location",
+                "operationId": "adminUpdateVisitType",
+                "parameters": [
+                    {
+                        "name": "location",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "visit_type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "VisitTypes"
+                ],
+                "summary": "Delete visit type",
+                "description": "Delete a visit type",
+                "operationId": "adminDeleteVisitType",
+                "parameters": [
+                    {
+                        "name": "location",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "visit_type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/kiosk/locations/{location}/visit-types/{visit_type}": {
+            "get": {
+                "tags": [
+                    "VisitTypes"
+                ],
+                "summary": "Show visit type (kiosk)",
+                "description": "Retrieve a visit type for kiosk clients",
+                "operationId": "kioskShowVisitType",
+                "parameters": [
+                    {
+                        "name": "location",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "visit_type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/admin/locations/{location}/visit-types/{visit_type}/form-fields": {
+            "post": {
+                "tags": [
+                    "VisitTypes"
+                ],
+                "summary": "Create form field for visit type",
+                "description": "Create a form field for a visit type",
+                "operationId": "adminStoreVisitTypeFormField",
+                "parameters": [
+                    {
+                        "name": "location",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "visit_type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/kiosk/visit-responses": {
+            "post": {
+                "tags": [
+                    "VisitResponses"
+                ],
+                "summary": "Store a visit response",
+                "description": "Create a new visit response from kiosk",
+                "operationId": "storeVisitResponse",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/kiosk/visit-responses/{visitId}": {
+            "get": {
+                "tags": [
+                    "VisitResponses"
+                ],
+                "summary": "Get visit response",
+                "description": "Retrieve visit response by id",
+                "operationId": "getVisitResponse",
+                "parameters": [
+                    {
+                        "name": "visitId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/visits/by-qr/{qrCode}": {
+            "get": {
+                "tags": [
+                    "VisitResponses"
+                ],
+                "summary": "Get visit by QR",
+                "description": "Lookup a visit by its QR code",
+                "operationId": "getVisitByQr",
+                "parameters": [
+                    {
+                        "name": "qrCode",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                }
+            }
+        },
+        "/kiosk/visits/by-id/{idNumber}": {
+            "get": {
+                "tags": [
+                    "VisitResponses"
+                ],
+                "summary": "Get visit by ID number",
+                "description": "Lookup a visit by visitor ID number",
+                "operationId": "getVisitByIdNumber",
+                "parameters": [
+                    {
+                        "name": "idNumber",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/kiosk/visits/{visitId}/checkout": {
+            "patch": {
+                "tags": [
+                    "VisitResponses"
+                ],
+                "summary": "Checkout a visit",
+                "description": "Marks a visit as checked out",
+                "operationId": "checkoutVisit",
+                "parameters": [
+                    {
+                        "name": "visitId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/super-admin/admins": {
+            "get": {
+                "tags": [
+                    "Admins"
+                ],
+                "summary": "List admin users",
+                "description": "List administrators (super-admin)",
+                "operationId": "listAdmins",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admins"
+                ],
+                "summary": "Create admin user",
+                "description": "Create a new admin user",
+                "operationId": "createAdmin",
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/super-admin/admins/{admin}": {
+            "get": {
+                "tags": [
+                    "Admins"
+                ],
+                "summary": "Show admin user",
+                "description": "Retrieve admin user details",
+                "operationId": "showAdmin",
+                "parameters": [
+                    {
+                        "name": "admin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admins"
+                ],
+                "summary": "Update admin user",
+                "description": "Update an admin user",
+                "operationId": "updateAdmin",
+                "parameters": [
+                    {
+                        "name": "admin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admins"
+                ],
+                "summary": "Delete admin user",
+                "description": "Delete an admin user",
+                "operationId": "deleteAdmin",
+                "parameters": [
+                    {
+                        "name": "admin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/super-admin/admins/{admin}/locations": {
+            "put": {
+                "tags": [
+                    "Admins"
+                ],
+                "summary": "Assign admin locations",
+                "description": "Assign locations to an admin user",
+                "operationId": "assignAdminLocations",
+                "parameters": [
+                    {
+                        "name": "admin",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "responses": {
+            "200": {
+                "description": "Success"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Kiosks",
+            "description": "Kiosks"
+        },
+        {
+            "name": "Authentication",
+            "description": "Authentication"
+        },
+        {
+            "name": "Kiosk",
+            "description": "Kiosk"
+        },
+        {
+            "name": "Locations",
+            "description": "Locations"
+        },
+        {
+            "name": "Visits",
+            "description": "Visits"
+        },
+        {
+            "name": "VisitTypes",
+            "description": "VisitTypes"
+        },
+        {
+            "name": "VisitResponses",
+            "description": "VisitResponses"
+        },
+        {
+            "name": "Admins",
+            "description": "Admins"
+        }
+    ]
+}

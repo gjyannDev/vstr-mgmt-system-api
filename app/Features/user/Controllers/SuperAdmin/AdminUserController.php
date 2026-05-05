@@ -10,38 +10,129 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use OpenApi\Annotations as OA;
 
 class AdminUserController extends Controller
 {
-    public function __construct(private AdminUserService $adminUserService) {}
+  public function __construct(private AdminUserService $adminUserService) {}
 
-    public function index(Request $request): JsonResponse
-    {
-        return $this->adminUserService->index($request);
-    }
+  /**
+   * @OA\Get(
+   *     path="/super-admin/admins",
+   *     operationId="listAdmins",
+   *     tags={"Admins"},
+   *     summary="List admin users",
+   *     description="List administrators (super-admin)",
+   *     security={{"sanctum": {}}},
+   *     @OA\Response(response=200, description="Success")
+   * )
+   */
+  public function index(Request $request): JsonResponse
+  {
+    return $this->adminUserService->index($request);
+  }
 
-    public function store(StoreAdminUserRequest $request): JsonResponse
-    {
-        return $this->adminUserService->store($request);
-    }
+  /**
+   * @OA\Post(
+   *     path="/super-admin/admins",
+   *     operationId="createAdmin",
+   *     tags={"Admins"},
+   *     summary="Create admin user",
+   *     description="Create a new admin user",
+   *     security={{"sanctum": {}}},
+   *     @OA\Response(response=200, description="Success")
+   * )
+   */
+  public function store(StoreAdminUserRequest $request): JsonResponse
+  {
+    return $this->adminUserService->store($request);
+  }
 
-    public function show(User $admin, Request $request): JsonResponse
-    {
-        return $this->adminUserService->show($admin, $request);
-    }
+  /**
+   * @OA\Get(
+   *     path="/super-admin/admins/{admin}",
+   *     operationId="showAdmin",
+   *     tags={"Admins"},
+   *     summary="Show admin user",
+   *     description="Retrieve admin user details",
+   *     security={{"sanctum": {}}},
+   *     @OA\Parameter(
+   *         name="admin",
+   *     in="path",
+   *     required=true,
+   *         @OA\Schema(type="integer")
+   *     ),
+   *     @OA\Response(response=200, description="Success")
+   * )
+   */
+  public function show(User $admin, Request $request): JsonResponse
+  {
+    return $this->adminUserService->show($admin, $request);
+  }
 
-    public function update(UpdateAdminUserRequest $request, User $admin): JsonResponse
-    {
-        return $this->adminUserService->update($request, $admin);
-    }
+  /**
+   * @OA\Put(
+   *     path="/super-admin/admins/{admin}",
+   *     operationId="updateAdmin",
+   *     tags={"Admins"},
+   *     summary="Update admin user",
+   *     description="Update an admin user",
+   *     security={{"sanctum": {}}},
+   *     @OA\Parameter(
+   *         name="admin",
+   *     in="path",
+   *     required=true,
+   *         @OA\Schema(type="integer")
+   *     ),
+   *     @OA\Response(response=200, description="Success")
+   * )
+   */
+  public function update(UpdateAdminUserRequest $request, User $admin): JsonResponse
+  {
+    return $this->adminUserService->update($request, $admin);
+  }
 
-    public function assignLocations(AssignAdminLocationsRequest $request, User $admin): JsonResponse
-    {
-        return $this->adminUserService->assignLocations($request, $admin);
-    }
+  /**
+   * @OA\Put(
+   *     path="/super-admin/admins/{admin}/locations",
+   *     operationId="assignAdminLocations",
+   *     tags={"Admins"},
+   *     summary="Assign admin locations",
+   *     description="Assign locations to an admin user",
+   *     security={{"sanctum": {}}},
+   *     @OA\Parameter(
+   *         name="admin",
+   *     in="path",
+   *     required=true,
+   *         @OA\Schema(type="integer")
+   *     ),
+   *     @OA\Response(response=200, description="Success")
+   * )
+   */
+  public function assignLocations(AssignAdminLocationsRequest $request, User $admin): JsonResponse
+  {
+    return $this->adminUserService->assignLocations($request, $admin);
+  }
 
-    public function destroy(User $admin, Request $request): JsonResponse
-    {
-        return $this->adminUserService->destroy($admin, $request);
-    }
+  /**
+   * @OA\Delete(
+   *     path="/super-admin/admins/{admin}",
+   *     operationId="deleteAdmin",
+   *     tags={"Admins"},
+   *     summary="Delete admin user",
+   *     description="Delete an admin user",
+   *     security={{"sanctum": {}}},
+   *     @OA\Parameter(
+   *         name="admin",
+   *     in="path",
+   *     required=true,
+   *         @OA\Schema(type="integer")
+   *     ),
+   *     @OA\Response(response=200, description="Success")
+   * )
+   */
+  public function destroy(User $admin, Request $request): JsonResponse
+  {
+    return $this->adminUserService->destroy($admin, $request);
+  }
 }
